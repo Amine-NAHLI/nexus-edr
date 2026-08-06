@@ -1,0 +1,24 @@
+# --- LE CŒUR DU SERVEUR ---
+
+# FASTAPI: Le framework (le réceptionniste de l'hôtel).
+# Il crée les portes d'entrée (Endpoints API), vérifie les données entrantes
+# et génère la documentation automatiquement. Ultra-rapide et moderne.
+fastapi
+
+# UVICORN: Le serveur web ASGI (le moteur).
+# FastAPI n'est que du code. Uvicorn est le programme qui écoute le port réseau (Internet)
+# et attrape les milliers de requêtes en asynchrone pour les donner à FastAPI sans crasher.
+uvicorn
+
+
+# --- LA BASE DE DONNÉES ---
+
+# SQLALCHEMY: L'ORM (Le traducteur universel).
+# Au lieu d'écrire du code SQL lourd ("INSERT INTO..."), il permet d'écrire du code Python 
+# (ex: `Agent(name="PC-1")`). Il traduit tout seul en SQL pour PostgreSQL.
+sqlalchemy
+
+# PSYCOPG2-BINARY: Le Pilote (Le câble de connexion).
+# C'est la bibliothèque physique qui permet à SQLAlchemy et Python d'envoyer 
+# concrètement les requêtes vers le serveur PostgreSQL.
+psycopg2-binary
