@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time" // Pour mettre le script en pause
+	"time"
+
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
 )
 
 type TelemetryData struct {
@@ -16,58 +19,52 @@ type TelemetryData struct {
 	IpDestination          string  `json:"ip_destination"`
 }
 
-// Petite fonction maison pour tirer nos requêtes POST
 func sendAlert(data TelemetryData) {
 	jsonData, _ := json.Marshal(data)
 	url := "http://127.0.0.1:8000/api/telemetry"
 	reponse, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	
 	if err != nil {
-		fmt.Println("❌ Erreur de connexion pour", data.AgentID)
+		fmt.Println("❌ Erreur de connexion au serveur")
 		return
 	}
 	defer reponse.Body.Close()
-	fmt.Printf("✅ Attaque envoyée pour %s (Code %d)\n", data.AgentID, reponse.StatusCode)
+	fmt.Printf("✅ Alerte envoyée (Code %d)\n", reponse.StatusCode)
 }
 
 func main() {
-	fmt.Println("🚀 Agent EDR démarré. Lancement des simulations d'attaques...")
-
-	// Attaque 1 : Cryptomining (CPU à fond)
-	attaque1 := TelemetryData{
-		AgentID:                "PC-COMPTA-01",
-		CpuPercent:             99.9,
-		RamPercent:             45.0,
-		SuspiciousProcessFound: true,
-		IpDestination:          "198.51.100.23",
-	}
-
-	// Attaque 2 : Fuite de données (RAM à fond vers une IP louche)
-	attaque2 := TelemetryData{
-		AgentID:                "SERVEUR-BASE-05",
-		CpuPercent:             12.0,
-		RamPercent:             98.5,
-		SuspiciousProcessFound: true,
-		IpDestination:          "45.33.22.11", 
-	}
-
-	// Attaque 3 : Ransomware total
-	attaque3 := TelemetryData{
-		AgentID:                "PC-PATRON-01",
-		CpuPercent:             100.0,
-		RamPercent:             100.0,
-		SuspiciousProcessFound: true,
-		IpDestination:          "9.9.9.9",
-	}
-
-	// On tire nos 3 missiles avec 1 seconde d'écart
-	sendAlert(attaque1)
-	time.Sleep(1 * time.Second)
+	fmt.Println("🚀 Agent EDR Actif. Surveillance du système en cours...")
 	
-	sendAlert(attaque2)
-	time.Sleep(1 * time.Second)
-	
-	sendAlert(attaque3)
+	agentName := "MON-PC-WINDOWS"
 
-	fmt.Println("🏁 Toutes les attaques ont été envoyées au Backend !")
+	// Boucle infinie : on vérifie l'ordinateur toutes les 3 secondes
+	for {
+		// 1. Lire le VRAI processeur (CPU)
+		cpuPercent, _ := cpu.Percent(0, false)
+		
+		// 2. Lire la VRAIE mémoire (RAM)
+		vMem, _ := mem.VirtualMemory()
+		
+		currentCpu := cpuPercent[0]
+		currentRam := vMem.UsedPercent
+
+		fmt.Printf("🔍 Analyse - CPU: %.2f%% | RAM: %.2f%%\n", currentCpu, currentRam)
+
+		// 3. Détecter une anomalie
+		// Si ton processeur OU ta RAM dépasse 80%, c'est suspect !
+		if currentCpu > 80.0 || currentRam > 80.0 {
+			fmt.Println("⚠️ ANOMALIE DÉTECTÉE ! Surcharge du système !")
+			
+			alert := TelemetryData{
+				AgentID:                agentName,
+				CpuPercent:             currentCpu,
+				RamPercent:             currentRam,
+				SuspiciousProcessFound: true,
+				IpDestination:          "IP INCONNUE", 
+			}
+			sendAlert(alert)
+		}
+
+		time.Sleep(3 * time.Second)
+	}
 }
