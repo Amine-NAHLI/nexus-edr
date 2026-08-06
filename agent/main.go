@@ -32,17 +32,24 @@ func sendAlert(data TelemetryData) {
 	fmt.Printf("✅ Alerte envoyée (Code %d)\n", reponse.StatusCode)
 }
 
+// Nouvelle fonction magique pour calculer les paliers de 5% (80, 85, 90...)
+func getPalier(valeur float64) float64 {
+	return float64(int(valeur/5) * 5)
+}
+
 func main() {
-	fmt.Println("🚀 Agent EDR Actif. Surveillance du système en cours...")
+	fmt.Println("🚀 Agent EDR Actif. Surveillance Anti-Spam (Par Paliers) en cours...")
 	
 	agentName := "MON-PC-WINDOWS"
+	
+	// On mémorise le dernier palier alerté. On commence à 75.
+	dernierPalierAlerte := 75.0
 
-	// Boucle infinie : on vérifie l'ordinateur toutes les 3 secondes
 	for {
-		// 1. Lire le VRAI processeur (CPU)
+		// 1. Lire le processeur (CPU)
 		cpuPercent, _ := cpu.Percent(0, false)
 		
-		// 2. Lire la VRAIE mémoire (RAM)
+		// 2. Lire la mémoire (RAM)
 		vMem, _ := mem.VirtualMemory()
 		
 		currentCpu := cpuPercent[0]
@@ -50,10 +57,18 @@ func main() {
 
 		fmt.Printf("🔍 Analyse - CPU: %.2f%% | RAM: %.2f%%\n", currentCpu, currentRam)
 
-		// 3. Détecter une anomalie
-		// Si ton processeur OU ta RAM dépasse 80%, c'est suspect !
-		if currentCpu > 80.0 || currentRam > 80.0 {
-			fmt.Println("⚠️ ANOMALIE DÉTECTÉE ! Surcharge du système !")
+		// On cherche la valeur la plus haute entre le CPU et la RAM
+		maxUtilisation := currentCpu
+		if currentRam > maxUtilisation {
+			maxUtilisation = currentRam
+		}
+
+		// On calcule à quel "palier" de 5% on se trouve (ex: 84 -> 80, 87 -> 85)
+		palierActuel := getPalier(maxUtilisation)
+
+		// 3. Détecter une anomalie : on dépasse 80% ET on a franchi un NOUVEAU palier !
+		if palierActuel >= 80.0 && palierActuel > dernierPalierAlerte {
+			fmt.Printf("⚠️ ALERTE ROUGE : Nouveau palier critique franchi (%.0f%%) !\n", palierActuel)
 			
 			alert := TelemetryData{
 				AgentID:                agentName,
@@ -63,6 +78,13 @@ func main() {
 				IpDestination:          "IP INCONNUE", 
 			}
 			sendAlert(alert)
+			
+			// On met à jour le dernier palier pour ne plus spammer la base de données
+			dernierPalierAlerte = palierActuel
+			
+		} else if maxUtilisation < 75.0 {
+			// Si le PC se calme (en dessous de 75%), on réinitialise le système d'alerte !
+			dernierPalierAlerte = 75.0
 		}
 
 		time.Sleep(3 * time.Second)
