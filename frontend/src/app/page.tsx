@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 // On définit le "Contrat" (comme Pydantic en Python, mais pour TypeScript)
 interface TelemetryData {
+  id: number; // NOUVEAU : l'ID généré par PostgreSQL
   agent_id: string;
   cpu_percent: number;
   ram_percent: number;
@@ -22,6 +23,19 @@ export default function Home() {
       setAlerts(data); // On sauvegarde les données reçues
     } catch (error) {
       console.error("Erreur de connexion au Backend:", error);
+    }
+  };
+
+  // NOUVELLE FONCTION POUR SUPPRIMER
+  const deleteAlert = async (id: number) => {
+    try {
+      await fetch(`http://127.0.0.1:8000/api/alerts/${id}`, {
+        method: "DELETE",
+      });
+      // On rafraîchit la liste immédiatement après la suppression
+      fetchAlerts();
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
     }
   };
 
@@ -68,7 +82,12 @@ export default function Home() {
                 </p>
               )}
               
-              <button className="btn-block">Bloquer l'IP</button>
+              <button 
+                className="btn-block" 
+                onClick={() => deleteAlert(alerte.id)}
+              >
+                Neutraliser la menace
+              </button>
             </div>
           ))}
         </div>
