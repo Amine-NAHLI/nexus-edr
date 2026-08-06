@@ -1,8 +1,9 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
-# 1. On définit le "Contrat" avec Pydantic
+# 1. Le Contrat
 class TelemetryData(BaseModel):
     agent_id: str
     cpu_percent: float
@@ -10,23 +11,41 @@ class TelemetryData(BaseModel):
     suspicious_process_found: bool
     ip_destination: Optional[str] = None
 
-# On initialise notre API
 app = FastAPI(title="Nexus EDR API")
 
-# On crée la porte d'entrée par défaut
+# --- NOUVEAUTÉ 1 : CORS ---
+# On autorise expressément ton Dashboard (port 3000) à lire les données
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# --- NOUVEAUTÉ 2 : Base de données temporaire ---
+# Une liste vide qui va garder nos alertes en mémoire
+alertes_memoire = []
+
 @app.get("/")
 def read_root():
     return {"status": "success", "message": "Bienvenue sur le Backend de Nexus EDR !"}
 
-# 2. La nouvelle route qui écoute les envois de données (POST)
+# Route POST : L'Agent Go envoie les données ici
 @app.post("/api/telemetry")
 def receive_telemetry(data: TelemetryData):
-    # Affichage dans le terminal pour débugger
     print(f"📡 Données reçues du PC {data.agent_id}: CPU={data.cpu_percent}%")
     
-    # Si le PC nous dit qu'il a vu un processus bizarre
     if data.suspicious_process_found:
         print(f"🚨 ALERTE ROUGE sur le PC {data.agent_id} !!")
+        # On SAUVEGARDE l'alerte dans notre liste
+        alertes_memoire.append(data)
         return {"status": "alert_registered", "action": "block_process"}
         
     return {"status": "ok", "message": "Données enregistrées"}
+
+# --- NOUVEAUTÉ 3 : Route GET (La route de lecture) ---
+# Le Dashboard Next.js va appeler cette route pour récupérer la liste
+@app.get("/api/alerts")
+def get_alerts():
+    return alertes_memoire
