@@ -18,3 +18,4 @@ Veuillez suivre les documents dans cet ordre :
 - 👉 **[Étape 2]** Lisez `02_etape_agent.md` pour le développement du collecteur de données en Go.
 - 👉 **[Étape 3]** Lisez `03_etape_frontend.md` pour la conception de l'interface administrateur.
 - 👉 **[Étape 4]** Lisez `04_etape_ia.md` pour comprendre comment nous allons implémenter le Machine Learning et le Reinforcement Learning.
+- 👉 **[Étape 5]** (Future) Création d'une application mobile (React Native / Flutter) pour recevoir les alertes push de l'IA en temps réel.
