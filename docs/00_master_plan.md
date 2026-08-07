@@ -4,7 +4,7 @@
 Créer une plateforme de cybersécurité (EDR - Endpoint Detection and Response) complète, capable de surveiller un parc informatique en temps réel et d'utiliser l'Intelligence Artificielle pour bloquer les menaces.
 
 ## 🏗️ Architecture Globale
-Le projet suit une architecture moderne en "Monorepo" (tous les sous-projets sont dans ce même dossier Git). Il est divisé en 4 grands piliers techniques :
+Le projet suit une architecture moderne en "Monorepo" (tous les sous-projets sont dans ce même dossier   Git). Il est divisé en 4 grands piliers techniques :
 1. **L'Agent (Golang) :** Le logiciel espion bienveillant installé sur les PC cibles.
 2. **Le Backend (Python/FastAPI) :** Le cerveau central qui gère l'API et la base de données.
 3. **Le Dashboard (Next.js) :** L'interface web pour l'administrateur.
