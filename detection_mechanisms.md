@@ -26,7 +26,7 @@ Le Backend reçoit le dossier et orchestre l'investigation (idéalement en paral
 3. **Risk Engine :** Un algorithme combine les deux résultats. Si le `Risk Score > 75/100`, il génère une alerte Critique.
 
 
----
+---s
 
 
 ## 2. Flux d'Approbation des Actions de Remédiation (Human-in-the-Loop)
@@ -116,27 +116,6 @@ Si les deux remontent une alerte (Policy=HIGH + IA Anomaly=0.96), le Risk Score 
 #### 5. Actions de Réponse Automatisée
 L'administrateur choisit les actions selon la gravité, et pour la criticité maximale liée au chiffrement de fichiers, il peut activer l'option "Terminer le processus" automatiquement (qui passera outre la validation humaine pour sauver les données en une fraction de seconde).
 
-### 🏗️ Architecture du Module Ransomware
-```text
-                    PC
-                     │
-              File Activity
-                     │
-                     ▼
-                 Agent Go
-                     │
-         ┌───────────┴───────────┐
-         ▼                       ▼
- Admin Security Policy    AI Anomaly Model
-         │                       │
-         └───────────┬───────────┘
-                     ▼
-                 Risk Engine
-                     │
-                     ▼
-             Dashboard (Alertes)
-```
-
 
 ---
 
@@ -216,3 +195,50 @@ C'est ici que ce module brille. Le Risk Engine peut désormais corréler une att
 4. *Module 3 (Réseau)* : Ce processus se connecte à une IP de commande (C2) malveillante.
 5. *Module 4 (Fichiers)* : Début d'une altération massive de fichiers (Comportement Ransomware).
 👉 Grâce à la corrélation de ces 5 événements, le **Risk Score devient instantanément CRITICAL (100/100)** et la machine est isolée.
+
+
+---
+
+
+## L'Architecture d'Intelligence Artificielle (Le Cerveau Central)
+
+### 🎯 Objectif : L'Immunité Collective (Crowd Immunity)
+Plutôt que d'avoir une petite IA isolée sur chaque PC qui n'apprend que de l'utilisateur local, Nexus-EDR utilisera une **IA Centralisée sur le Backend**. 
+Dès que l'Agent EDR est déployé chez 10, 100 ou 10 000 utilisateurs, toute leur télémétrie (comportements normaux et attaques subies) remonte vers l'API centrale pour enrichir le même modèle.
+
+### 🛠️ Le Modèle "Fait Maison" (Souveraineté des Données)
+Nous allons coder notre propre moteur de Machine Learning en Python (ex: `scikit-learn`). Ce modèle sera hébergé sur le serveur central. 
+
+1. **Apprentissage Continu (Continuous Learning) :** Le modèle se nourrit en permanence de la base de données globale PostgreSQL. Si un utilisateur subit une attaque d'un malware inconnu ou d'une nouvelle technique, le modèle enregistre ce modèle comportemental.
+2. **L'Immunité Collective :** Dès que la nouvelle méthode d'attaque est comprise par le Cerveau Central, l'IA protège instantanément *tous les autres utilisateurs* du réseau, car les agents interrogent tous la même base centrale.
+
+
+---
+
+
+## L'Écosystème d'Enrichissement (Threat Intelligence APIs)
+
+Pour que notre "Cerveau Central" (Backend) puisse prendre des décisions intelligentes instantanées en s'appuyant sur l'expertise mondiale, il interrogera des bases de données de **Threat Intelligence** gratuites et open-source. Le Backend fera ces requêtes HTTP (asynchrones) dès qu'il recevra de la télémétrie de l'Agent.
+
+### 1. APIs de Réputation de Fichiers (Hashes SHA-256)
+- **VirusTotal API :** (Jusqu'à 500 req/jour gratuits). Vérifie le hash contre 70+ moteurs antivirus mondiaux. La référence absolue.
+- **MalwareBazaar (abuse.ch) :** (Gratuit, illimité). Excellente base de données pour identifier la *famille* exacte d'un malware et ne pas juste avoir un score binaire.
+- **Hybrid Analysis API :** (Gratuit). Fournit des rapports de "Sandboxing" comportementaux très détaillés pour un Hash.
+
+### 2. APIs de Réputation Réseau (IPs & Domaines)
+- **AbuseIPDB :** (Jusqu'à 1000 req/jour). L'API de référence pour savoir si une adresse IP participe à un réseau de Botnets ou fait des attaques Brute Force. Retourne un `Abuse Score` sur 100.
+- **URLhaus (abuse.ch) :** (Gratuit, illimité). Spécialisée dans la détection d'URLs distribuant des malwares (souvent appelées par des scripts malveillants).
+- **AlienVault OTX (Open Threat Exchange) :** (Gratuit, illimité). Le plus grand réseau communautaire. Permet de vérifier n'importe quel "IoC" (Indicateur de Compromission) pour voir si la communauté mondiale l'a déjà signalé.
+
+### 3. APIs de Contexte (Analyse de la cible)
+- **Shodan API :** (Plan gratuit limité). Le "moteur de recherche des hackers". Permet de savoir si l'IP avec laquelle notre processus communique héberge un service étrange (ex: un serveur de Commande et Contrôle C2 ouvert).
+- **GreyNoise (Community API) :** (Gratuit). Filtre le "bruit de fond" d'Internet. Indispensable pour éviter que notre EDR s'affole à chaque fois qu'un scanner de recherche bénin (comme ceux de Google) "touche" notre machine.
+- **IPinfo / ip-api.com :** (Gratuit). API de Géolocalisation. Savoir qu'un processus système caché se connecte soudainement à un serveur en Russie ou en Corée du Nord est un modificateur de score massif pour le Risk Engine.
+
+### 4. Détections "Gratuites" via Corrélation d'API
+Grâce au simple croisement de la télémétrie locale (Hash + IP) avec ces API, notre Backend est capable de détecter des menaces complexes sans aucun code supplémentaire dans l'Agent Go :
+- **Cryptojacking (Minage caché) :** L'API AbuseIPDB/Shodan tagge l'IP de destination comme "Mining Pool" (Bitcoin/Monero).
+- **Trafic Dark Web (Tor) :** L'API AlienVault indique que l'IP de destination est un "Tor Exit Node", un comportement typique des ransomwares pour cacher leur C2.
+- **Serveurs Cobalt Strike / C2 :** L'API Shodan identifie un serveur offensif ouvert sur l'IP distante.
+- **Gestion des Vulnérabilités (CVE) :** L'Agent envoie le Hash d'un fichier légitime. VirusTotal répond qu'il n'y a pas de virus, MAIS que ce fichier possède une vulnérabilité critique connue (CVE). L'EDR sert alors de scanner de failles.
+- **Proxies/VPN Malveillants :** L'API IPinfo détecte que l'IP distante appartient à un fournisseur de VPN anonyme louche (utilisé pour l'exfiltration de données).
